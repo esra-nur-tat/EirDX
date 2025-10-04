@@ -5,39 +5,36 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-// GET /api/history/[patient_id]
-export async function GET(
-  req: Request,
-  { params }: { params: { patient_id: string } }
-) {
+// ✅ GET /api/history/[patient_id]
+export async function GET(req: Request, context: any) {
+  const { params } = await context; // 👈 Next 15: context artık Promise<RouteContext>
   const patientId = params.patient_id;
 
   try {
-    // Admissions
+    // 1️⃣ Admissions
     const { data: admissions, error: admissionError } = await supabaseAdmin
       .from("admissions")
       .select("*")
-      .eq("patient_id", patientId);
+      .eq("patient_id", patientId)
+      .order("date", { ascending: false });
 
     if (admissionError) throw admissionError;
 
-    // Labs
+    // 2️⃣ Labs
     const { data: labs, error: labError } = await supabaseAdmin
       .from("labs")
       .select("*")
       .eq("patient_id", patientId);
-
     if (labError) throw labError;
 
-    // Treatments
+    // 3️⃣ Treatments
     const { data: treatments, error: treatmentError } = await supabaseAdmin
       .from("treatments")
       .select("*")
       .eq("patient_id", patientId);
-
     if (treatmentError) throw treatmentError;
 
-    // Timeline
+    // 4️⃣ Merge into timeline
     const history = (admissions || []).map((adm) => {
       let type: "visit" | "admission" | "discharge" = "admission";
       if (adm.status === "Admitted") type = "visit";
@@ -76,9 +73,9 @@ export async function GET(
 
     return NextResponse.json({ history });
   } catch (error: any) {
-    console.error("History fetch error:", error.message);
+    console.error("History fetch error:", error);
     return NextResponse.json(
-      { error: "Hasta geçmişi getirilemedi" },
+      { error: "Hasta geçmişi getirilemedi: " + error.message },
       { status: 500 }
     );
   }

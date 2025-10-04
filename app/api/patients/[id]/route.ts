@@ -6,12 +6,9 @@ const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
 // 📌 GET -> Tek hasta getir (+ admissions verisi ile birlikte)
-export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: Request, context: any) {
+  const { params } = await context; // 👈 Next 15: context artık Promise<RouteContext>
   try {
-    // Önce hasta bilgilerini al
     const { data: patient, error } = await supabaseAdmin
       .from("patients")
       .select("*")
@@ -20,7 +17,6 @@ export async function GET(
 
     if (error) throw error;
 
-    // Hasta admissions kayıtlarını çek
     const { data: admissions, error: admissionsError } = await supabaseAdmin
       .from("admissions")
       .select("date, status")
@@ -33,21 +29,15 @@ export async function GET(
     let hospitalization_date: string | null = null;
 
     if (admissions && admissions.length > 0) {
-      // Son geliş tarihi (status=Admitted veya genel olarak ilk kayıt)
       const lastAdmission = admissions.find((a) => a.status === "Admitted");
       admission_date = lastAdmission ? lastAdmission.date : admissions[0].date;
 
-      // Son yatış tarihi (status=Inpatient olan en güncel kayıt)
       const lastHosp = admissions.find((a) => a.status === "Inpatient");
       hospitalization_date = lastHosp ? lastHosp.date : null;
     }
 
     return NextResponse.json({
-      patient: {
-        ...patient,
-        admission_date,
-        hospitalization_date,
-      },
+      patient: { ...patient, admission_date, hospitalization_date },
     });
   } catch (err: any) {
     console.error("GET /api/patients/[id] error:", err.message);
@@ -56,10 +46,8 @@ export async function GET(
 }
 
 // 📌 PUT -> Hasta güncelle
-export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(req: Request, context: any) {
+  const { params } = await context;
   try {
     const body = await req.json();
 
@@ -79,43 +67,32 @@ export async function PUT(
       .single();
 
     if (error) throw error;
-
     return NextResponse.json({ success: true, patient: data });
   } catch (err: any) {
-    return NextResponse.json(
-      { error: err.message || "Hasta güncellenemedi" },
-      { status: 500 }
-    );
+    console.error("PUT /api/patients/[id] error:", err.message);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
 
-// 📌 DELETE -> Hasta sil
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+// 📌 DELETE -> Hasta sil (assignments ile birlikte)
+export async function DELETE(req: Request, context: any) {
+  const { params } = await context;
   try {
-    // 1. Önce assignments sil
     const { error: assignError } = await supabaseAdmin
       .from("assignments")
       .delete()
       .eq("patient_id", params.id);
-
     if (assignError) throw assignError;
 
-    // 2. Sonra patient sil
     const { error: patientError } = await supabaseAdmin
       .from("patients")
       .delete()
       .eq("id", params.id);
-
     if (patientError) throw patientError;
 
     return NextResponse.json({ success: true });
   } catch (err: any) {
-    return NextResponse.json(
-      { error: err.message || "Hasta silinemedi" },
-      { status: 500 }
-    );
+    console.error("DELETE /api/patients/[id] error:", err.message);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

@@ -5,10 +5,9 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+// ✅ PUT – Lab kaydını güncelle
+export async function PUT(req: Request, context: any) {
+  const { params } = await context; // 👈 Next 15: context artık Promise<RouteContext>
   try {
     const body = await req.json();
 
@@ -19,30 +18,29 @@ export async function PUT(
       .select()
       .single();
 
-    if (error)
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) throw error;
 
-    return NextResponse.json({ lab: data });
+    return NextResponse.json({ success: true, lab: data });
   } catch (err: any) {
+    console.error("PUT /api/labs/[id] error:", err.message);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+// ✅ DELETE – Lab kaydını sil
+export async function DELETE(_: Request, context: any) {
+  const { params } = await context;
   try {
     const { error } = await supabaseAdmin
       .from("labs")
       .delete()
       .eq("id", params.id);
 
-    if (error)
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) throw error;
 
     return NextResponse.json({ success: true });
   } catch (err: any) {
+    console.error("DELETE /api/labs/[id] error:", err.message);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
