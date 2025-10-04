@@ -191,7 +191,7 @@ export function PatientTable() {
             <TableRow>
               <TableHead>Identitiy Number</TableHead>
               <TableHead>Name-Surname</TableHead>
-              <TableHead>Dcotors</TableHead>
+              <TableHead>Doctors</TableHead>
               <TableHead className="text-right">Operations</TableHead>
             </TableRow>
           </TableHeader>
