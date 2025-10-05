@@ -37,7 +37,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-type AdmissionStatus = "Admitted" | "Inpatient" | "Discharged";
+type AdmissionStatus = "Clinical Visit " | "Admitted" | "Discharged";
 
 type Admission = {
   id: string;
@@ -198,8 +198,8 @@ export function AdmissionsTable() {
                   <SelectValue placeholder="Select Statue" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="Clinical Visit">Clinical Visit </SelectItem>
                   <SelectItem value="Admitted">Admitted </SelectItem>
-                  <SelectItem value="Inpatient">Inpatient </SelectItem>
                   <SelectItem value="Discharged">
                     Discharged 
                   </SelectItem>
@@ -214,10 +214,10 @@ export function AdmissionsTable() {
       </CardHeader>
 
       <CardContent>
-        {/* Filtreler */}
+        {/* Filters */}
         <div className="flex flex-col md:flex-row gap-3 mb-4">
           <Input
-            placeholder="Admission ID filtrele"
+            placeholder="Filter by Admission ID"
             value={filterAdmission}
             onChange={(e) => setFilterAdmission(e.target.value)}
           />
@@ -230,13 +230,13 @@ export function AdmissionsTable() {
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem onClick={() => setFilterStatus("")}>
-                Tümü
+                All
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilterStatus("Clinical Visit ")}>
+                Clinical Visit
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setFilterStatus("Admitted")}>
                 Admitted
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilterStatus("Inpatient")}>
-                Inpatient
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setFilterStatus("Discharged")}>
                 Discharged
