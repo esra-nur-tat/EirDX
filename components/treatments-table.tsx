@@ -484,7 +484,7 @@ export function TreatmentsTable() {
                 </Button>
               </TableHead>
               <TableHead>Unit</TableHead>
-              <TableHead>Administiration Root</TableHead>
+              <TableHead>Application Root</TableHead>
               <TableHead className="text-right">Operations</TableHead>
             </TableRow>
           </TableHeader>
@@ -495,7 +495,7 @@ export function TreatmentsTable() {
                   colSpan={8}
                   className="text-center text-muted-foreground py-6"
                 >
-                  Hiç kayıt bulunamadı.
+                  No records found.
                 </TableCell>
               </TableRow>
             ) : (
