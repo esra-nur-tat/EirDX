@@ -75,7 +75,7 @@ export default function LandingPage() {
       >
         {[
           {
-            title: "📊 Smart Dasboard",
+            title: "📊 Smart Dashboard",
             desc: "View patient records, lab results, and administered medications in one place.",
             icon: <Activity className="h-8 w-8 text-blue-400" />,
           },
@@ -143,7 +143,7 @@ export default function LandingPage() {
               github: "https://github.com/drw2side",
               linkedin:
                 "https://www.linkedin.com/in/kayra-durmu%C5%9F-11912b162?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app",
-              idea: "Projede en çok etkilendiğim kısım, hasta verilerini güvenli bir şekilde yönetmek için modern teknolojilerden faydalanmamız oldu.",
+              idea: "Built and fine-tuned a Temporal Fusion Transformer (TFT) model, designing a scalable cloud training pipeline to boost forecasting accuracy and performance. Assisted with the selection and filtering of medications and lab values, ensuring the model’s clinical relevance.",
             },
             {
               name: "Esra Nur Tat",
@@ -151,7 +151,7 @@ export default function LandingPage() {
               avatar: "/avatars/esra.jpg",
               github: "https://github.com/esra-nur-tat",
               linkedin: "https://www.linkedin.com/in/esra-nur-tat-4a4571206/",
-              idea: "Tasarım sürecinde, kullanıcı dostu bir arayüzün sağlık çalışanları için ne kadar önemli olduğunu gördüm.",
+              idea: "Built the test hourly panel dataset by integrating lab and medication data through BigQuery and SQL preprocessing. Developed the interface using Next.js, implementing dynamic data visualization and integrating the Vercel API for seamless model interaction.",
             },
             {
               name: "Zeynep Sude Kaplan",

@@ -75,14 +75,36 @@ type SortConfig = {
 } | null;
 
 const medications = [
-  "Insulin (Regular) for Hyperkalemia",
+  "Tacrolimus",
   "Insulin",
+  "Olanzapine",
+  "Glucagon",
+  "Dexamethasone",
+  "Sirolimus",
+  "Prednisone",
+  "Tacrolimus XR",
+  "Triamterene-HCTZ (37.5/25)",
+  "GlipiZIDE XL",
+  "Furosemide",
+  "Hydrocortisone",
+  "Hydrocortisone Na",
+  "Hydrochlorothiazide",
+  "Spironolactone",
+  "Empagliflozin",
+  "CycloSPORINE (Sandimmune)",
+  "Eplerenone",
+  "Chlorthalidone",
+  "Phenytoin",
+  "CycloSPORINE (Neoral) MODIFIED",
+  "Octreotide Acetate",
+  "Fosphenytoin",
+  "Phenytoin Sodium (IV)",
+  "Valproate Sodium",
+  "Dextrose Water",
+  "Ritonavir",
   "MetFORMIN XR (Glucophage XR)",
-  "Insulin Glargine (CVICU Protocol)",
   "Dextrose 50%",
-  "MetFORMIN (Glucophage)",
-  "GlipiZIDE",
-  "Citrate Dextrose 3% (ACD-A) CRRT",
+  "MetFORMIN (Glucophage)"
 ];
 const units = ["Units", "gm", "mg", "mL", "UNIT/HR"];
 const routes = ["PB", "VG", "ND"];
