@@ -37,7 +37,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-type AdmissionStatus = "Clinical Visit " | "Admitted" | "Discharged";
+type AdmissionStatus = "Clinical Visit" | "Admitted" | "Discharged";
 
 type Admission = {
   id: string;
@@ -232,7 +232,7 @@ export function AdmissionsTable() {
               <DropdownMenuItem onClick={() => setFilterStatus("")}>
                 All
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilterStatus("Clinical Visit ")}>
+              <DropdownMenuItem onClick={() => setFilterStatus("Clinical Visit")}>
                 Clinical Visit
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setFilterStatus("Admitted")}>
