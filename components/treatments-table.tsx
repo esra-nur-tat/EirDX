@@ -106,8 +106,8 @@ const medications = [
   "Dextrose 50%",
   "MetFORMIN (Glucophage)"
 ];
-const units = ["Units", "gm", "mg", "mL", "UNIT/HR"];
-const routes = ["PB", "VG", "ND"];
+const units = ["Units", "mg", "mL", "g"];
+const routes = ["IV", "IM", "SC", "ORAL"];
 
 export function TreatmentsTable() {
   const params = useParams();

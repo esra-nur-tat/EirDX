@@ -40,13 +40,13 @@ export default function PatientHistoryPage() {
   return (
     <Card className="bg-card/70 backdrop-blur-md">
       <CardHeader>
-        <CardTitle>📜 Hasta Zaman Çizelgesi</CardTitle>
+        <CardTitle>📜 Patient Timeline</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="relative border-l border-muted-foreground/30 pl-6 space-y-6">
           {history.length === 0 ? (
             <p className="text-muted-foreground text-sm">
-              Henüz geçmiş kaydı bulunmamaktadır.
+              No past records found.
             </p>
           ) : (
             history.map((event, index) => (
@@ -91,15 +91,15 @@ export default function PatientHistoryPage() {
                       {event.labs?.length ? (
                         <div>
                           <p className="font-semibold text-sm mb-2">
-                            🔬 Lab Testleri
+                            🔬 Lab Results
                           </p>
                           <div className="border rounded-md overflow-hidden">
                             <table className="w-full text-sm">
                               <thead className="bg-muted/40">
                                 <tr>
                                   <th className="text-left p-2">Test</th>
-                                  <th className="text-left p-2">Sonuç</th>
-                                  <th className="text-left p-2">Birim</th>
+                                  <th className="text-left p-2">Result</th>
+                                  <th className="text-left p-2">Unit</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -122,17 +122,17 @@ export default function PatientHistoryPage() {
                       {event.treatments?.length ? (
                         <div>
                           <p className="font-semibold text-sm mb-2">
-                            💊 Tedaviler
+                            💊 Treatments
                           </p>
                           <div className="border rounded-md overflow-hidden">
                             <table className="w-full text-sm">
                               <thead className="bg-muted/40">
                                 <tr>
                                   <th className="text-left p-2">
-                                    İlaç / Uygulama
+                                    Medication / Applitaction 
                                   </th>
-                                  <th className="text-left p-2">Doz</th>
-                                  <th className="text-left p-2">Birim</th>
+                                  <th className="text-left p-2">Dose</th>
+                                  <th className="text-left p-2">Unit</th>
                                 </tr>
                               </thead>
                               <tbody>
