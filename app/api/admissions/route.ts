@@ -37,7 +37,7 @@ export async function POST(req: Request) {
 
     if (!admission_id || !date || !status || !patient_id) {
       return NextResponse.json(
-        { error: "Tüm alanlar gerekli" },
+        { error: "All fields necessary." },
         { status: 400 }
       );
     }
