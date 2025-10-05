@@ -46,10 +46,10 @@ export async function GET(req: Request, context: any) {
         date: adm.date,
         description:
           adm.status === "Admitted"
-            ? "Hastaneye kabul"
+            ? "Clinical Visit"
             : adm.status === "Inpatient"
-            ? "Serviste yatış"
-            : "Taburcu edildi",
+            ? "Admission"
+            : "Discharged",
         labs: (labs || [])
           .filter((lab) => lab.admission_id === adm.admission_id)
           .map((lab) => ({
@@ -66,7 +66,7 @@ export async function GET(req: Request, context: any) {
           })),
         summary:
           adm.status === "Discharged"
-            ? adm.discharge_summary || "Taburcu özeti eklenmemiş"
+            ? adm.discharge_summary || "Admission summary not added yet."
             : null,
       };
     });
@@ -75,7 +75,7 @@ export async function GET(req: Request, context: any) {
   } catch (error: any) {
     console.error("History fetch error:", error);
     return NextResponse.json(
-      { error: "Hasta geçmişi getirilemedi: " + error.message },
+      { error: "Patient history could not fetch: " + error.message },
       { status: 500 }
     );
   }
