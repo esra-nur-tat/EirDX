@@ -75,22 +75,22 @@ export default function LandingPage() {
       >
         {[
           {
-            title: "📊 Smart Dashboard",
+            title: "Smart Dashboard",
             desc: "View patient records, lab results, and administered medications in one place.",
             icon: <Activity className="h-8 w-8 text-blue-400" />,
           },
           {
-            title: "🧪 Lab Tracking",
+            title: "Lab Tracking",
             desc: "Monitor key lab values such as Glucose, HbA1c, Sodium, Potassium, and Cholesterol with time-based trends.",
             icon: <Stethoscope className="h-8 w-8 text-purple-400" />,
           },
           {
-            title: "💊 Medication Management",
+            title: "Medication Management",
             desc: "Record and manage Insulin, Metformin, Dextrose, and other diabetes medications with dosage and timing details.",
             icon: <Pill className="h-8 w-8 text-pink-400" />,
           },
           {
-            title: "🤖 Prediction Module",
+            title: "Prediction Module",
             desc: "Use AI model(TFT Model) to predict future lab values and provide clinical decision support for treatment planning.",
             icon: <Stethoscope className="h-8 w-8 text-purple-400" />,
           },
