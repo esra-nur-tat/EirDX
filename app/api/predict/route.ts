@@ -203,6 +203,7 @@ export async function POST(req: Request) {
 
     const out = await res.json();
 
+    console.log("🔍 Model raw output:", out);
     // ------------------------------------------------
     // 11️⃣  Return simplified response
     // ------------------------------------------------
