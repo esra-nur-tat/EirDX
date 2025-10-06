@@ -77,9 +77,9 @@ export default function LoginPage() {
       >
         <Card className="w-[380px] bg-card/70 backdrop-blur-md shadow-xl border border-white/10">
           <CardHeader className="text-center">
-            <h1 className="text-2xl font-extrabold text-primary">MedPro</h1>
+            <h1 className="text-2xl font-extrabold text-primary">EirDx</h1>
             <CardTitle className="text-center text-lg mt-1 text-muted-foreground">
-              Giriş Paneli
+              Login Panel
             </CardTitle>
           </CardHeader>
           <CardContent>
