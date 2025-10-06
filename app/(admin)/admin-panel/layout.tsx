@@ -6,9 +6,9 @@ import { cn } from "@/lib/utils";
 import { Users, UserPlus, Stethoscope, Link2 } from "lucide-react";
 
 const links = [
-  { href: "/admin-panel/doctors", label: "Doktorlar", icon: Stethoscope },
-  { href: "/admin-panel/patients", label: "Hastalar", icon: Users },
-  { href: "/admin-panel/assignments", label: "Atamalar", icon: Link2 },
+  { href: "/admin-panel/doctors", label: "Doctors", icon: Stethoscope },
+  { href: "/admin-panel/patients", label: "Patients", icon: Users },
+  { href: "/admin-panel/assignments", label: "Assignments", icon: Link2 },
 ];
 
 export default function AdminLayout({

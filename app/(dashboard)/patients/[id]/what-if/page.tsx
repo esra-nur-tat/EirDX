@@ -1,266 +1,320 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   LineChart,
   Line,
   XAxis,
   YAxis,
-  Tooltip,
   CartesianGrid,
+  Tooltip,
+  Legend,
   ResponsiveContainer,
+  Dot,
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { createClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
 const medications = [
-  "Tacrolimus", "Insulin", "Olanzapine", "Glucagon", "Dexamethasone",
-  "Sirolimus", "Prednisone", "Tacrolimus XR", "Triamterene-HCTZ (37.5/25)",
-  "GlipiZIDE XL", "Furosemide", "Hydrocortisone", "Hydrocortisone Na",
-  "Hydrochlorothiazide", "Spironolactone", "Empagliflozin", "CycloSPORINE (Sandimmune)",
-  "Eplerenone", "Chlorthalidone", "Phenytoin", "CycloSPORINE (Neoral) MODIFIED",
-  "Octreotide Acetate", "Fosphenytoin", "Phenytoin Sodium (IV)", "Valproate Sodium",
-  "Dextrose Water", "Ritonavir", "MetFORMIN XR (Glucophage XR)", "Dextrose 50%",
-  "MetFORMIN (Glucophage)"
+  "Insulin",
+  "Olanzapine",
+  "Glucagon",
+  "Dexamethasone",
+  "Ritonavir",
+  "MetFORMIN (Glucophage)",
 ];
 
-const units = ["Units", "mg", "mL", "g"];
-const routes = ["IV", "IM", "SC", "ORAL"];
+const colors = [
+  "#E57373", "#64B5F6", "#81C784", "#FFD54F", "#BA68C8",
+  "#4DB6AC", "#FF8A65", "#A1887F", "#90A4AE", "#F06292",
+];
 
-type Treatment = {
-  id: string;
-  medication: string;
+interface Treatment {
+  medication_name: string;
   dose: number;
   unit: string;
   route: string;
   color: string;
-  data?: { hour: number; value: number }[];
-};
+  predictions: number[];
+}
 
-export default function WhatIfPage() {
+export default function WhatIfPage({ params }: { params: { id: string } }) {
+  const [admissions, setAdmissions] = useState<any[]>([]);
+  const [selectedAdmission, setSelectedAdmission] = useState<string | null>(null);
+  const [labs, setLabs] = useState<{ date: string; glucose: number }[]>([]);
   const [treatments, setTreatments] = useState<Treatment[]>([]);
-  const [glucoseValues] = useState([
-    { hour: 0, value: 122 },
-    { hour: 1, value: 130 },
-    { hour: 2, value: 143 },
-  ]); // observed data
-
   const [open, setOpen] = useState(false);
-  const [selectedMedication, setSelectedMedication] = useState("");
-  const [selectedUnit, setSelectedUnit] = useState("mg");
-  const [selectedRoute, setSelectedRoute] = useState("IV");
-  const [dose, setDose] = useState(10);
+  const [selectedMedication, setSelectedMedication] = useState("Insulin");
+  const [dose, setDose] = useState<number>(10);
+  const [unit, setUnit] = useState<string>("mg");
+  const [route, setRoute] = useState<string>("IV");
+  const [loading, setLoading] = useState(false);
 
-  const maxTreatments = 3;
-  const colorPalette = ["#EF4444", "#F59E0B", "#3B82F6"];
+  const getNextColor = () => colors[treatments.length % colors.length];
 
-  // Find last observed hour to offset predictions
-  const lastObservedHour = glucoseValues[glucoseValues.length - 1].hour;
+  // --------------------------
+  // 🏥 Fetch Admissions for Patient
+  // --------------------------
+  useEffect(() => {
+    const fetchAdmissions = async () => {
+      const { data, error } = await supabase
+        .from("admissions")
+        .select("admission_id, date, status")
+        .eq("patient_id", params.id)
+        .order("date", { ascending: false });
 
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      setAdmissions(data);
+      if (data.length > 0) setSelectedAdmission(data[0].admission_id);
+    };
+    fetchAdmissions();
+  }, [params.id]);
+
+  // --------------------------
+  // 🧪 Fetch Labs for Selected Admission
+  // --------------------------
+  useEffect(() => {
+    if (!selectedAdmission) return;
+
+    const fetchLabs = async () => {
+      const { data, error } = await supabase
+        .from("labs")
+        .select("value, date")
+        .eq("patient_id", params.id)
+        .eq("admission_id", selectedAdmission)
+        .eq("lab_category", "Glucose")
+        .order("date", { ascending: true });
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const transformed = data.map((d) => ({
+          date: d.date,
+          glucose: d.value,
+        }));
+        setLabs(transformed);
+      } else {
+        setLabs([]);
+      }
+    };
+
+    fetchLabs();
+  }, [params.id, selectedAdmission]);
+
+  // --------------------------
+  // 💉 Add What-If Treatment (Predict API)
+  // --------------------------
   const handleAddTreatment = async () => {
-    if (treatments.length >= maxTreatments) return;
+    setLoading(true);
+    try {
+      const res = await fetch("/api/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patient_id: params.id,
+          treatment: {
+            medication_name: selectedMedication,
+            dose,
+            unit,
+            route,
+          },
+        }),
+      });
 
-    const newTreatment: Treatment = {
-      id: crypto.randomUUID(),
-      medication: selectedMedication || "Insulin",
-      dose: dose,
-      unit: selectedUnit,
-      route: selectedRoute,
-      color: colorPalette[treatments.length],
-    };
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Prediction failed");
 
-    // 🔧 MOCK API CALL
-    const mockApiResponse = {
-      predictions: {
-        q50: Array.from({ length: 24 }, (_, i) => 120 + Math.sin(i / 2) * 10 - i / 3),
-      },
-    };
+      const newTreatment: Treatment = {
+        medication_name: selectedMedication,
+        dose,
+        unit,
+        route,
+        color: getNextColor(),
+        predictions: data.predictions || [],
+      };
 
-    // Start after the last observed hour
-    const formattedData = mockApiResponse.predictions.q50.map((v, i) => ({
-      hour: lastObservedHour + 1 + i, // offset
-      value: v,
+      setTreatments((prev) => [...prev, newTreatment]);
+      setOpen(false);
+    } catch (err) {
+      console.error(err);
+      alert("Prediction API failed — check console");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --------------------------
+  // 📊 Merge Past Labs + Predictions with Dates
+  // --------------------------
+  const chartData = () => {
+    const past = labs.map((l) => ({
+      date: new Date(l.date).toISOString(),
+      Glucose: l.glucose,
     }));
 
-    setTreatments((prev) => [...prev, { ...newTreatment, data: formattedData }]);
-    setOpen(false);
+    const lastDate = past.length > 0 ? new Date(past[past.length - 1].date) : new Date();
+
+    const future = Array.from({ length: 24 }, (_, i) => {
+      const futureDate = new Date(lastDate);
+      futureDate.setHours(futureDate.getHours() + i + 1);
+      const entry: Record<string, any> = { date: futureDate.toISOString() };
+      treatments.forEach((t) => {
+        entry[t.medication_name] = t.predictions[i] ?? null;
+      });
+      return entry;
+    });
+
+    return [...past, ...future];
   };
 
-  const handleDelete = (id: string) => {
-    setTreatments((prev) => prev.filter((t) => t.id !== id));
-  };
-
+  // --------------------------
+  // 🎨 Render
+  // --------------------------
   return (
     <div className="p-6 space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Glucose Prediction — What-If Simulation</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {/* Chart */}
-          <div className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  type="number"
-                  domain={[0, 24]} // ✅ Fixed domain (0–24 hours)
-                  dataKey="hour"
-                  label={{ value: "Hour", position: "insideBottomRight", offset: -5 }}
-                />
-                <YAxis
-                  label={{
-                    value: "Glucose (mg/dL)",
-                    angle: -90,
-                    position: "insideLeft",
-                  }}
-                />
-                <Tooltip />
-
-                {/* Real glucose values */}
-                <Line
-                  data={glucoseValues}
-                  dataKey="value"
-                  stroke="#FFFFFF"
-                  strokeWidth={2}
-                  dot={{ r: 4, fill: "#fff" }}
-                  name="Patient Glucose"
-                />
-
-                {/* Predictions */}
-                {treatments.map((t) => (
-                  <Line
-                    key={t.id}
-                    data={t.data}
-                    dataKey="value"
-                    stroke={t.color}
-                    strokeWidth={3}
-                    dot={false}
-                    name={`${t.medication} ${t.dose}${t.unit}`}
-                  />
+          <div className="flex justify-between items-center">
+            <CardTitle>What-If Glucose Prediction</CardTitle>
+            {/* Admission Selector */}
+            <div>
+              <Label>Select Admission</Label>
+              <select
+                className="ml-3 border rounded-md p-2 bg-black text-white"
+                value={selectedAdmission ?? ""}
+                onChange={(e) => setSelectedAdmission(e.target.value)}
+              >
+                {admissions.map((a) => (
+                  <option key={a.admission_id} value={a.admission_id}>
+                    {a.admission_id} — {new Date(a.date).toLocaleDateString()}
+                  </option>
                 ))}
-              </LineChart>
-            </ResponsiveContainer>
+              </select>
+            </div>
           </div>
+        </CardHeader>
 
-          {/* Active treatments */}
-          <div className="mt-6 space-y-4">
-            {treatments.map((t) => (
-              <Card key={t.id} className="p-4 border-2">
-                <div className="flex justify-between items-center">
-                  <p
-                    className="text-sm font-semibold"
-                    style={{ color: t.color }} // ✅ line-matching color
-                  >
-                    {t.medication} — {t.dose}
-                    {t.unit} ({t.route})
-                  </p>
-                  <Button variant="destructive" onClick={() => handleDelete(t.id)}>
-                    Delete
-                  </Button>
-                </div>
-              </Card>
-            ))}
+        <CardContent>
+          <ResponsiveContainer width="100%" height={400}>
+            <LineChart data={chartData()}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="date"
+                tickFormatter={(v) => new Date(v).toLocaleString("en-US", { hour: "2-digit", hour12: false })}
+                label={{ value: "Date/Time", position: "insideBottom", offset: -5 }}
+              />
+              <YAxis label={{ value: "Glucose (mg/dL)", angle: -90, position: "insideLeft" }} />
+              <Tooltip
+                labelFormatter={(v) => new Date(v).toLocaleString()}
+                formatter={(val, name) => [`${val} mg/dL`, name]}
+              />
+              <Legend />
 
+              {/* Past Glucose Line */}
+              <Line
+                type="monotone"
+                dataKey="Glucose"
+                stroke="#FFFFFF"
+                strokeWidth={2}
+                dot={<Dot r={3} fill="#FFF" />}
+                name="Past Glucose"
+              />
 
-            {/* Popup for new treatment */}
-            {treatments.length < maxTreatments && (
-              <Dialog open={open} onOpenChange={setOpen}>
-                <DialogTrigger asChild>
-                  <Button className="w-full">Add Treatment</Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add Treatment</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-3 py-2">
-                    <div>
-                      <Label>Medication</Label>
-                      <Select onValueChange={setSelectedMedication}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select medication" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {medications.map((m) => (
-                            <SelectItem key={m} value={m}>
-                              {m}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Dose</Label>
-                      <input
-                        type="number"
-                        className="w-full p-2 border rounded-md bg-background"
-                        value={dose}
-                        onChange={(e) => setDose(Number(e.target.value))}
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <div className="w-1/2">
-                        <Label>Unit</Label>
-                        <Select onValueChange={setSelectedUnit}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select unit" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {units.map((u) => (
-                              <SelectItem key={u} value={u}>
-                                {u}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="w-1/2">
-                        <Label>Route</Label>
-                        <Select onValueChange={setSelectedRoute}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select route" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {routes.map((r) => (
-                              <SelectItem key={r} value={r}>
-                                {r}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button onClick={handleAddTreatment}>Confirm</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            )}
-            {treatments.length >= maxTreatments && (
-              <p className="text-sm text-muted-foreground text-center">
-                Max treatment limit reached (3)
-              </p>
-            )}
-          </div>
+              {/* Future Predictions */}
+              {treatments.map((t, idx) => (
+                <Line
+                  key={idx}
+                  type="monotone"
+                  dataKey={t.medication_name}
+                  stroke={t.color}
+                  strokeWidth={3}
+                  dot={<Dot r={3} fill={t.color} />}
+                />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+
+          {/* Add Treatment */}
+          {treatments.length < 3 && (
+            <div className="mt-6">
+              <Button onClick={() => setOpen(true)} disabled={loading}>
+                + Add Treatment
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* 💊 Add Treatment Popup */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Treatment Option</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Medication</Label>
+              <select
+                className="w-full border rounded-md p-2"
+                value={selectedMedication}
+                onChange={(e) => setSelectedMedication(e.target.value)}
+              >
+                {medications.map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Dose</Label>
+                <Input type="number" value={dose} onChange={(e) => setDose(parseFloat(e.target.value))} />
+              </div>
+              <div>
+                <Label>Unit</Label>
+                <select className="w-full border rounded-md p-2" value={unit} onChange={(e) => setUnit(e.target.value)}>
+                  <option value="mg">mg</option>
+                  <option value="mL">mL</option>
+                  <option value="Units">Units</option>
+                  <option value="g">g</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <Label>Route</Label>
+              <select className="w-full border rounded-md p-2" value={route} onChange={(e) => setRoute(e.target.value)}>
+                <option value="IV">IV</option>
+                <option value="IM">IM</option>
+                <option value="SC">SC</option>
+                <option value="ORAL">ORAL</option>
+              </select>
+            </div>
+
+            <div className="flex justify-end">
+              <Button onClick={handleAddTreatment} disabled={loading}>
+                {loading ? "Predicting..." : "Add Treatment"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
