@@ -13,6 +13,7 @@ import {
   BedDouble,
   DoorOpen,
   IdCard,
+  VenusAndMars
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -118,7 +119,7 @@ export default function PatientDetailPage() {
     {
       title: "Gender",
       value: patient.gender || "-",
-      icon: <DoorOpen className="h-5 w-5 text-pink-500" />,
+      icon: <VenusAndMars className="h-5 w-5 text-pink-500" />,
     },
   ];
 
