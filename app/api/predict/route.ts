@@ -183,7 +183,7 @@ export async function POST(req: Request) {
       max_prediction_length: 24,
       static_categoricals: ["gender"],
       static_reals: ["anchor_age"],
-      time_varying_known_categoricals: ["dow_id_new"],
+      //time_varying_known_categoricals: ["dow_id_new"],
       time_varying_known_reals: medKeys.flatMap(k => [k, `${k}_mask`]),
       time_varying_unknown_reals: labKeys.flatMap(k => [k, `${k}_mask`]),
       add_relative_time_idx: true,
