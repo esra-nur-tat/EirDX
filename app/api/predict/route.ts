@@ -8,8 +8,10 @@ const scalerPath = path.join(process.cwd(), "scaler_values.json");
 const scalers = JSON.parse(fs.readFileSync(scalerPath, "utf-8"));
 
 // 💊 Load medication effect scaling from JSON
-const medEffectScalePath = "D:/Repos/EirDX/medEffectScale.json";
-const medEffectScale = JSON.parse(fs.readFileSync(medEffectScalePath, "utf-8"));
+
+const filePath = path.join(process.cwd(), "app/api/predict/medEffectScale.json");
+const medEffectScale = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+
 
 // 🔢 Normalization helpers
 function normalizeFeature(key: string, value: number) {
