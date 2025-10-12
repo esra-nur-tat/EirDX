@@ -29,6 +29,7 @@ type Patient = {
   admission_date?: string | null;
   hospitalization_date?: string | null;
   room?: string | null;
+  gender?: string | null;
 };
 
 export default function PatientDetailPage() {
@@ -112,6 +113,11 @@ export default function PatientDetailPage() {
     {
       title: "Room",
       value: patient.room || "-",
+      icon: <DoorOpen className="h-5 w-5 text-pink-500" />,
+    },
+    {
+      title: "Gender",
+      value: patient.gender || "-",
       icon: <DoorOpen className="h-5 w-5 text-pink-500" />,
     },
   ];

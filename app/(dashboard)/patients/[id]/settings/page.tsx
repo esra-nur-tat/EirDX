@@ -6,7 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 type Patient = {
   id: string;
   identity_number: string;
@@ -16,6 +22,7 @@ type Patient = {
   height: number | null;
   blood_type: string | null;
   room: string | null;
+  gender: string | null;
 };
 
 export default function PatientSettingsPage() {
@@ -30,7 +37,9 @@ export default function PatientSettingsPage() {
       if (res.ok) {
         setPatient(data.patient);
       } else {
-        toast.error(data.error || "Patient information could not be retrieved.");
+        toast.error(
+          data.error || "Patient information could not be retrieved."
+        );
       }
       setLoading(false);
     })();
@@ -72,7 +81,9 @@ export default function PatientSettingsPage() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Identity Number</label>
+          <label className="block text-sm font-medium mb-1">
+            Identity Number
+          </label>
           <Input
             value={patient.identity_number}
             onChange={(e) => handleChange("identity_number", e.target.value)}
@@ -88,7 +99,9 @@ export default function PatientSettingsPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Date of Birth</label>
+          <label className="block text-sm font-medium mb-1">
+            Date of Birth
+          </label>
           <Input
             type="date"
             value={patient.birth_date ?? ""}
@@ -98,7 +111,9 @@ export default function PatientSettingsPage() {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Weight (kg)</label>
+            <label className="block text-sm font-medium mb-1">
+              Weight (kg)
+            </label>
             <Input
               type="number"
               value={patient.weight ?? ""}
@@ -106,7 +121,9 @@ export default function PatientSettingsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Height (cm)</label>
+            <label className="block text-sm font-medium mb-1">
+              Height (cm)
+            </label>
             <Input
               type="number"
               value={patient.height ?? ""}
@@ -128,6 +145,30 @@ export default function PatientSettingsPage() {
           <Input
             value={patient.room ?? ""}
             onChange={(e) => handleChange("room", e.target.value)}
+          />
+        </div>
+
+        <div>
+          <Select
+            value={patient.gender ?? ""}
+            onValueChange={(value: string) => handleChange("gender", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select gender" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem key={"M"} value={"M"}>
+                M
+              </SelectItem>
+              <SelectItem key={"F"} value={"F"}></SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Gender</label>
+          <Input
+            value={patient.gender ?? ""}
+            onChange={(e) => handleChange("gender", e.target.value)}
           />
         </div>
 

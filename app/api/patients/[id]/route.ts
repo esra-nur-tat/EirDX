@@ -61,6 +61,7 @@ export async function PUT(req: Request, context: any) {
         height: body.height ?? null,
         blood_type: body.blood_type || null,
         room: body.room || null,
+        gender: body.gender || null,
       })
       .eq("id", params.id)
       .select()
