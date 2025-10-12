@@ -5,14 +5,180 @@ import path from "path";
 
 // 🧩 Load scalers from JSON
 
-const scalerPath = path.join(process.cwd(), "app/api/predict/scaler_values.json");
-const scalers = JSON.parse(fs.readFileSync(scalerPath, "utf-8"));
+//const scalerPath = path.join(process.cwd(), "app/api/predict/scaler_values.json");
+type ScalerEntry = { mean: number; std: number };
+type ScalerMap = Record<string, ScalerEntry>;
+
+const scalers : ScalerMap = {
+  "lab_Glucose": {
+    "mean": 145.24946167355662,
+    "std": 112.5961141979172
+  },
+  "med_tacrolimus_xr": {
+    "mean": 4.211574952561668,
+    "std": 4.27095246605253
+  },
+  "med_eplerenone": {
+    "mean": 46.079473013174656,
+    "std": 31.902761610268517
+  },
+  "med_insulin": {
+    "mean": 9.913577513898495,
+    "std": 13.663128111831671
+  },
+  "med_spironolactone": {
+    "mean": 49.2841309660258,
+    "std": 41.38722484551391
+  },
+  "med_glipizide_xl": {
+    "mean": 7.195773930753558,
+    "std": 4.012159226283754
+  },
+  "med_phenytoin": {
+    "mean": 161.91041559774246,
+    "std": 88.79763678687854
+  },
+  "med_phenytoin_sodium_iv": {
+    "mean": 172.18985434455055,
+    "std": 219.11465555485665
+  },
+  "med_empagliflozin": {
+    "mean": 12.022980501392752,
+    "std": 4.979801826616413
+  },
+  "med_chlorthalidone": {
+    "mean": 26.126237623762368,
+    "std": 11.526920865414253
+  },
+  "med_triamterene_hctz_37_5_25": {
+    "mean": 1.0400410677618075,
+    "std": 0.2063692854338863
+  },
+  "med_tacrolimus": {
+    "mean": 2.12436947411458,
+    "std": 1.690946766834923
+  },
+  "med_hydrocortisone": {
+    "mean": 14.244123105474788,
+    "std": 12.581978062025392
+  },
+  "med_dextrose_water": {
+    "mean": 104.15019762845849,
+    "std": 31.652526346302448
+  },
+  "med_furosemide": {
+    "mean": 50.01925286672828,
+    "std": 41.833945928664775
+  },
+  "med_olanzapine": {
+    "mean": 5.643212494488536,
+    "std": 4.587986898783173
+  },
+  "med_octreotide_acetate": {
+    "mean": 132.5381114400601,
+    "std": 61.679903987035246
+  },
+  "med_fosphenytoin": {
+    "mean": 210.85687382297564,
+    "std": 280.18582233960444
+  },
+  "med_cyclosporine_neoral_modified": {
+    "mean": 89.3692143365772,
+    "std": 60.91718810710126
+  },
+  "med_prednisone": {
+    "mean": 24.445376427829704,
+    "std": 24.425062948261296
+  },
+  "med_sirolimus": {
+    "mean": 1.6279069767441874,
+    "std": 1.1390291381280613
+  },
+  "med_hydrochlorothiazide": {
+    "mean": 21.92470924168145,
+    "std": 8.572990746753568
+  },
+  "med_ritonavir": {
+    "mean": 102.3668639053254,
+    "std": 15.204270373485684
+  },
+  "med_valproate_sodium": {
+    "mean": 584.1458855585835,
+    "std": 360.44457022385086
+  },
+  "med_glipizide": {
+    "mean": 6.646175518522952,
+    "std": 3.0625564742806604
+  },
+  "med_metformin_glucophage": {
+    "mean": 761.2834411344928,
+    "std": 256.37664700767374
+  },
+  "med_dexamethasone": {
+    "mean": 5.322718653383715,
+    "std": 4.704588496372152
+  },
+  "med_metformin_xr_glucophage_xr": {
+    "mean": 851.3477269679504,
+    "std": 376.37782561659515
+  },
+  "med_hydrocortisone_na": {
+    "mean": 56.95930101719327,
+    "std": 27.54285872464397
+  },
+  "med_glucagon": {
+    "mean": 1.468043478260869,
+    "std": 1.3334315642985262
+  },
+  "med_dextrose_50": {
+    "mean": 18.193790479274604,
+    "std": 6.854873056820892
+  },
+  "med_cyclosporine_sandimmune": {
+    "mean": 103.0260631001372,
+    "std": 52.13229903174295
+  }
+};
 
 
 // 💊 Load medication effect scaling from JSON
 
-const filePath = path.join(process.cwd(), "app/api/predict/medEffectScale.json");
-const medEffectScale = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+//const filePath = path.join(process.cwd(), "app/api/predict/medEffectScale.json");
+type MedEffectScaleMap = Record<string, number>;
+const medEffectScale : MedEffectScaleMap = {
+  "med_chlorthalidone": -0.7465430799993805,
+  "med_cyclosporine_neoral_modified": -0.4723644058382799,
+  "med_cyclosporine_sandimmune": -0.3508421986495242,
+  "med_dexamethasone": 1.9061702751980387,
+  "med_dextrose_50": 17.20418237695092,
+  "med_dextrose_water": 1.7522980185754107,
+  "med_empagliflozin": 2.130156050287753,
+  "med_eplerenone": 0.234384726299378,
+  "med_fosphenytoin": 0.11384045135184212,
+  "med_furosemide": -0.09246405965529439,
+  "med_glipizide": 4.9800934351283725,
+  "med_glipizide_xl": -7.993477632689053,
+  "med_glucagon": -50.541997813818675,
+  "med_hydrochlorothiazide": 0.2058288264561603,
+  "med_hydrocortisone": -0.6673660704267648,
+  "med_hydrocortisone_na": -0.4372125384340699,
+  "med_insulin": 1.0,
+  "med_metformin_glucophage": -0.01832828352964274,
+  "med_metformin_xr_glucophage_xr": 0.00778304169195609,
+  "med_octreotide_acetate": -0.6285547258721654,
+  "med_olanzapine": -0.4307096940938958,
+  "med_phenytoin": 0.1919988365340103,
+  "med_phenytoin_sodium_iv": 0.08214977853792371,
+  "med_prednisone": -0.7619260122614588,
+  "med_ritonavir": 0.01875244082012226,
+  "med_sirolimus": 1.253356733487873,
+  "med_spironolactone": 0.23116968109092192,
+  "med_tacrolimus": -58.52297837731101,
+  "med_tacrolimus_xr": -7.446218906291095,
+  "med_triamterene_hctz_37_5_25": 97.33182187499877,
+  "med_valproate_sodium": -0.028170747782877918
+}
+;
 
 
 // 🔢 Normalization helpers
