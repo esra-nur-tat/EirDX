@@ -149,6 +149,7 @@ export default function PatientSettingsPage() {
         </div>
 
         <div>
+          <label className="block text-sm font-medium mb-1">Gender</label>
           <Select
             value={patient.gender ?? ""}
             onValueChange={(value: string) => handleChange("gender", value)}
@@ -158,18 +159,11 @@ export default function PatientSettingsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem key={"M"} value={"M"}>
-                M
+                M 
               </SelectItem>
-              <SelectItem key={"F"} value={"F"}></SelectItem>
+              <SelectItem key={"F"} value={"F"}>F</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Gender</label>
-          <Input
-            value={patient.gender ?? ""}
-            onChange={(e) => handleChange("gender", e.target.value)}
-          />
         </div>
 
         <Button onClick={handleSave}>Save</Button>
