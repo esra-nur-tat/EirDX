@@ -119,7 +119,10 @@ export default function WhatIfPage({
         .eq("patient_id", id)
         .order("date", { ascending: false });
       setAdmissions(data || []);
-      if (data?.length > 0) setSelectedAdmission(data[0].admission_id);
+      if (data && data.length > 0) {
+        setSelectedAdmission(data[0].admission_id);
+      }
+
     };
     fetchAdmissions();
   }, [id]);
