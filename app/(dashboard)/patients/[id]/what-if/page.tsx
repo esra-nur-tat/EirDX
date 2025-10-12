@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, use } from "react";
 import {
   LineChart,
   Line,
@@ -13,10 +13,22 @@ import {
   Dot,
 } from "recharts";
 import { createClient } from "@supabase/supabase-js";
-import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 
 const supabase = createClient(
@@ -25,17 +37,47 @@ const supabase = createClient(
 );
 
 const medications = [
+  "Tacrolimus",
   "Insulin",
   "Olanzapine",
-  "Glucagon",
   "Dexamethasone",
+  "Sirolimus",
+  "Prednisone",
+  "Tacrolimus XR",
+  "Triamterene-HCTZ (37.5/25)",
+  "GlipiZIDE XL",
+  "Furosemide",
+  "Hydrocortisone",
+  "Hydrochlorothiazide",
+  "Spironolactone",
+  "Empagliflozin",
+  "CycloSPORINE (Sandimmune)",
+  "Eplerenone",
+  "Chlorthalidone",
+  "Phenytoin",
+  "CycloSPORINE (Neoral) MODIFIED",
+  "Octreotide Acetate",
+  "Fosphenytoin",
+  "Phenytoin Sodium (IV)",
+  "Valproate Sodium",
+  "Dextrose Water",
   "Ritonavir",
+  "MetFORMIN XR (Glucophage XR)",
+  "Dextrose 50%",
   "MetFORMIN (Glucophage)",
 ];
 
 const colors = [
-  "#E57373", "#64B5F6", "#81C784", "#FFD54F", "#BA68C8",
-  "#4DB6AC", "#FF8A65", "#A1887F", "#90A4AE", "#F06292",
+  "#E57373",
+  "#64B5F6",
+  "#81C784",
+  "#FFD54F",
+  "#BA68C8",
+  "#4DB6AC",
+  "#FF8A65",
+  "#A1887F",
+  "#90A4AE",
+  "#F06292",
 ];
 
 interface Treatment {
@@ -47,166 +89,155 @@ interface Treatment {
   predictions: number[];
 }
 
-export default function WhatIfPage({ params }: { params: { id: string } }) {
+export default function WhatIfPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
   const [admissions, setAdmissions] = useState<any[]>([]);
-  const [selectedAdmission, setSelectedAdmission] = useState<string | null>(null);
+  const [selectedAdmission, setSelectedAdmission] = useState<string | null>(
+    null
+  );
   const [labs, setLabs] = useState<{ date: string; glucose: number }[]>([]);
   const [treatments, setTreatments] = useState<Treatment[]>([]);
   const [open, setOpen] = useState(false);
   const [selectedMedication, setSelectedMedication] = useState("Insulin");
   const [dose, setDose] = useState<number>(10);
-  const [unit, setUnit] = useState<string>("mg");
-  const [route, setRoute] = useState<string>("IV");
+  const [unit, setUnit] = useState<string>("Units");
+  const [route, setRoute] = useState<string>("SC");
   const [loading, setLoading] = useState(false);
 
   const getNextColor = () => colors[treatments.length % colors.length];
 
-  // --------------------------
-  // 🏥 Fetch Admissions for Patient
-  // --------------------------
+  // 🏥 Admissions
   useEffect(() => {
     const fetchAdmissions = async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("admissions")
         .select("admission_id, date, status")
-        .eq("patient_id", params.id)
+        .eq("patient_id", id)
         .order("date", { ascending: false });
-
-      if (error) {
-        console.error(error);
-        return;
-      }
-
-      setAdmissions(data);
-      if (data.length > 0) setSelectedAdmission(data[0].admission_id);
+      setAdmissions(data || []);
+      if (data?.length > 0) setSelectedAdmission(data[0].admission_id);
     };
     fetchAdmissions();
-  }, [params.id]);
+  }, [id]);
 
-  // --------------------------
-  // 🧪 Fetch Labs for Selected Admission
-  // --------------------------
+  // 🧪 Labs
   useEffect(() => {
     if (!selectedAdmission) return;
-
     const fetchLabs = async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("labs")
         .select("value, date")
-        .eq("patient_id", params.id)
+        .eq("patient_id", id)
         .eq("admission_id", selectedAdmission)
         .eq("lab_category", "Glucose")
         .order("date", { ascending: true });
-
-      if (error) {
-        console.error(error);
-        return;
-      }
-
-      if (data && data.length > 0) {
-        const transformed = data.map((d) => ({
-          date: d.date,
-          glucose: d.value,
-        }));
-        setLabs(transformed);
-      } else {
-        setLabs([]);
-      }
+      setLabs((data || []).map((d) => ({ date: d.date, glucose: d.value })));
     };
-
     fetchLabs();
-  }, [params.id, selectedAdmission]);
+  }, [id, selectedAdmission]);
 
-  // --------------------------
-  // 💉 Add What-If Treatment (Predict API)
-  // --------------------------
+  // 💉 Add Treatment
   const handleAddTreatment = async () => {
     setLoading(true);
     try {
+      const cleanName = selectedMedication
+        .toLowerCase()
+        .replace(/\s+/g, "_")
+        .replace(/[()\/\-.%]/g, "_")
+        .replace(/_+/g, "_")
+        .trim();
+
+      const payload = {
+        patient_id: id,
+        treatment: {
+          medication_name: cleanName,
+          dose: Number(dose),
+          unit,
+          route,
+        },
+      };
+
       const res = await fetch("/api/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          patient_id: params.id,
-          treatment: {
-            medication_name: selectedMedication,
-            dose,
-            unit,
-            route,
-          },
-        }),
+        body: JSON.stringify(payload),
       });
-
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Prediction failed");
+      console.log("✅ Prediction API response:", data);
 
       const newTreatment: Treatment = {
-        medication_name: selectedMedication,
+        medication_name: `${selectedMedication} (${dose}${unit})`,
         dose,
         unit,
         route,
         color: getNextColor(),
-        predictions: data.predictions || [],
+        predictions: data.predictions_real || data.predictions?.q50 || [],
       };
+
+      console.log("✅ Prediction API response:", data);
+      console.log("🩸 Using predictions:", data.predictions_real?.slice(0,5) || data.predictions?.q50?.slice(0,5));
+
 
       setTreatments((prev) => [...prev, newTreatment]);
       setOpen(false);
     } catch (err) {
-      console.error(err);
-      alert("Prediction API failed — check console");
+      console.error("❌ handleAddTreatment error:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  // --------------------------
-  // 📊 Merge Past Labs + Predictions with Dates
-  // --------------------------
+  // 📊 Chart Data
   const chartData = () => {
     const past = labs.map((l) => ({
       date: new Date(l.date).toISOString(),
       Glucose: l.glucose,
     }));
-
-    const lastDate = past.length > 0 ? new Date(past[past.length - 1].date) : new Date();
+    const lastDate = past.length
+      ? new Date(past[past.length - 1].date)
+      : new Date();
 
     const future = Array.from({ length: 24 }, (_, i) => {
-      const futureDate = new Date(lastDate);
-      futureDate.setHours(futureDate.getHours() + i + 1);
-      const entry: Record<string, any> = { date: futureDate.toISOString() };
-      treatments.forEach((t) => {
-        entry[t.medication_name] = t.predictions[i] ?? null;
-      });
+      const fDate = new Date(lastDate);
+      fDate.setHours(fDate.getHours() + i + 1);
+      const entry: Record<string, any> = { date: fDate.toISOString() };
+      treatments.forEach(
+        (t) => (entry[t.medication_name] = t.predictions[i] ?? null)
+      );
       return entry;
     });
 
     return [...past, ...future];
   };
 
-  // --------------------------
-  // 🎨 Render
-  // --------------------------
+  // 🎨 UI
   return (
     <div className="p-6 space-y-6">
       <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>What-If Glucose Prediction</CardTitle>
-            {/* Admission Selector */}
-            <div>
-              <Label>Select Admission</Label>
-              <select
-                className="ml-3 border rounded-md p-2 bg-black text-white"
-                value={selectedAdmission ?? ""}
-                onChange={(e) => setSelectedAdmission(e.target.value)}
-              >
+        <CardHeader className="flex justify-between items-center">
+          <CardTitle>What-If Glucose Prediction</CardTitle>
+          <div className="flex flex-col">
+            <Label className="text-sm">Select Admission</Label>
+            <Select
+              value={selectedAdmission ?? ""}
+              onValueChange={setSelectedAdmission}
+            >
+              <SelectTrigger className="w-[220px] mt-2">
+                <SelectValue placeholder="Select admission..." />
+              </SelectTrigger>
+              <SelectContent>
                 {admissions.map((a) => (
-                  <option key={a.admission_id} value={a.admission_id}>
-                    {a.admission_id} — {new Date(a.date).toLocaleDateString()}
-                  </option>
+                  <SelectItem key={a.admission_id} value={a.admission_id}>
+                    {a.admission_id} —{" "}
+                    {new Date(a.date).toLocaleDateString("en-US")}
+                  </SelectItem>
                 ))}
-              </select>
-            </div>
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
 
@@ -216,17 +247,26 @@ export default function WhatIfPage({ params }: { params: { id: string } }) {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
                 dataKey="date"
-                tickFormatter={(v) => new Date(v).toLocaleString("en-US", { hour: "2-digit", hour12: false })}
-                label={{ value: "Date/Time", position: "insideBottom", offset: -5 }}
+                tickFormatter={(v) =>
+                  new Date(v).toLocaleString("en-US", {
+                    hour: "2-digit",
+                    hour12: false,
+                  })
+                }
               />
-              <YAxis label={{ value: "Glucose (mg/dL)", angle: -90, position: "insideLeft" }} />
+              <YAxis
+                label={{
+                  value: "Glucose (mg/dL)",
+                  angle: -90,
+                  position: "insideLeft",
+                }}
+              />
               <Tooltip
                 labelFormatter={(v) => new Date(v).toLocaleString()}
                 formatter={(val, name) => [`${val} mg/dL`, name]}
               />
               <Legend />
 
-              {/* Past Glucose Line */}
               <Line
                 type="monotone"
                 dataKey="Glucose"
@@ -236,7 +276,6 @@ export default function WhatIfPage({ params }: { params: { id: string } }) {
                 name="Past Glucose"
               />
 
-              {/* Future Predictions */}
               {treatments.map((t, idx) => (
                 <Line
                   key={idx}
@@ -245,23 +284,22 @@ export default function WhatIfPage({ params }: { params: { id: string } }) {
                   stroke={t.color}
                   strokeWidth={3}
                   dot={<Dot r={3} fill={t.color} />}
+                  name={`${t.medication_name} (${t.dose}${t.unit})`}
+                  isAnimationActive={false}
                 />
               ))}
             </LineChart>
           </ResponsiveContainer>
 
-          {/* Add Treatment */}
-          {treatments.length < 3 && (
-            <div className="mt-6">
-              <Button onClick={() => setOpen(true)} disabled={loading}>
-                + Add Treatment
-              </Button>
-            </div>
-          )}
+          <div className="mt-6">
+            <Button onClick={() => setOpen(true)} disabled={loading}>
+              + Add Treatment
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
-      {/* 💊 Add Treatment Popup */}
+      {/* 💊 Add Treatment Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -270,41 +308,66 @@ export default function WhatIfPage({ params }: { params: { id: string } }) {
           <div className="space-y-4">
             <div>
               <Label>Medication</Label>
-              <select
-                className="w-full border rounded-md p-2"
+              <Select
                 value={selectedMedication}
-                onChange={(e) => setSelectedMedication(e.target.value)}
+                onValueChange={setSelectedMedication}
               >
-                {medications.map((m) => (
-                  <option key={m} value={m}>{m}</option>
-                ))}
-              </select>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select medication" />
+                </SelectTrigger>
+                <SelectContent>
+                  {medications.map((m) => (
+                    <SelectItem key={m} value={m}>
+                      {m}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Dose</Label>
-                <Input type="number" value={dose} onChange={(e) => setDose(parseFloat(e.target.value))} />
+                <Input
+                  type="number"
+                  step="any"
+                  value={dose}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setDose(val === "" ? 0 : parseFloat(val));
+                  }}
+                  className="mt-1"
+                />
               </div>
               <div>
                 <Label>Unit</Label>
-                <select className="w-full border rounded-md p-2" value={unit} onChange={(e) => setUnit(e.target.value)}>
-                  <option value="mg">mg</option>
-                  <option value="mL">mL</option>
-                  <option value="Units">Units</option>
-                  <option value="g">g</option>
-                </select>
+                <Select value={unit} onValueChange={setUnit}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="mg">mg</SelectItem>
+                    <SelectItem value="Units">Units</SelectItem>
+                    <SelectItem value="mL">mL</SelectItem>
+                    <SelectItem value="g">g</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             <div>
               <Label>Route</Label>
-              <select className="w-full border rounded-md p-2" value={route} onChange={(e) => setRoute(e.target.value)}>
-                <option value="IV">IV</option>
-                <option value="IM">IM</option>
-                <option value="SC">SC</option>
-                <option value="ORAL">ORAL</option>
-              </select>
+              <Select value={route} onValueChange={setRoute}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="IV">IV</SelectItem>
+                  <SelectItem value="IM">IM</SelectItem>
+                  <SelectItem value="SC">SC</SelectItem>
+                  <SelectItem value="ORAL">ORAL</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex justify-end">
