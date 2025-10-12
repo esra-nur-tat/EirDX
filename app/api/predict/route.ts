@@ -420,6 +420,8 @@ export async function POST(req: Request) {
       anchor_age: maybeNormalize("anchor_age", age ?? 0)
     };
 
+    console.log("🚀 Payload prepared, calling model API..."+payload);
+
     // 💾 Debug payload
     //const debugPath = path.join(process.cwd(), "payload-debug.json");
     //fs.writeFileSync(debugPath, JSON.stringify(payload, null, 2), "utf-8");
@@ -432,6 +434,7 @@ export async function POST(req: Request) {
     });
 
     const text = await res.text();
+    console.log("🧠 Model API response received, length:", text);
     let out: any = {};
     try {
       out = JSON.parse(text);
