@@ -278,6 +278,13 @@ export default function WhatIfPage({
                 dot={<Dot r={3} fill="#FFF" />}
                 name="Past Glucose"
               />
+              <Line
+                type="monotone"
+                dataKey="insulin"
+                stroke="#ff4d4f"   // bright red
+                dot={{ r: 3 }}
+                strokeWidth={2}
+              />
 
               {treatments.map((t, idx) => (
                 <Line
