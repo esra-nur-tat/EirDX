@@ -271,8 +271,9 @@ export async function POST(req: Request) {
 
     // 🩸 Denormalize predictions
     // 🧩 Pre-scale before denormalization to avoid 4k values
-    const predRaw = out?.predictions?.q50 ?? [];
-    const medianAbs = predRaw.reduce((a, b) => a + Math.abs(b), 0) / predRaw.length;
+    const predRaw: number[] = out?.predictions?.q50 ?? [];
+    const medianAbs = predRaw.reduce((a: number, b: number) => a + Math.abs(b), 0) / predRaw.length;
+
     const rescaleFactor = medianAbs > 50 ? 0.05 : 1; // heuristic
     let predictions_real = predRaw.map((z: number) =>
       denormalizeFeature("lab_Glucose", z * rescaleFactor)
