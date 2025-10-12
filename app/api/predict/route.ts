@@ -255,8 +255,8 @@ export async function POST(req: Request) {
     };
 
     // 💾 Debug payload
-    const debugPath = path.join(process.cwd(), "payload-debug.json");
-    fs.writeFileSync(debugPath, JSON.stringify(payload, null, 2), "utf-8");
+    //const debugPath = path.join(process.cwd(), "payload-debug.json");
+    //fs.writeFileSync(debugPath, JSON.stringify(payload, null, 2), "utf-8");
 
     // 🌐 Call model API
     const res = await fetch(process.env.PREDICTION_API_URL!, {
