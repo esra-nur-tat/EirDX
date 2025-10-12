@@ -4,8 +4,10 @@ import fs from "fs";
 import path from "path";
 
 // 🧩 Load scalers from JSON
-const scalerPath = path.join(process.cwd(), "scaler_values.json");
+
+const scalerPath = path.join(process.cwd(), "app/api/predict/scaler_values.json");
 const scalers = JSON.parse(fs.readFileSync(scalerPath, "utf-8"));
+
 
 // 💊 Load medication effect scaling from JSON
 
