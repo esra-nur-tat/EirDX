@@ -487,7 +487,7 @@ export async function POST(req: Request) {
 
       const relEffect = medEffectScale[key] ?? 1.0;
       const dose = Number(treatment.dose ?? 0);
-      const scale = dose <= 0 ? 1 : Math.max(0.1, 1 + relEffect * Math.log1p(dose) / 2.5);
+      const scale = dose <= 0 ? 1 : Math.max(0.1, 1 + relEffect * Math.log1p(dose) / 50);
 
       predictions_real = predictions_real.map((v) => v * scale);
       console.log(
