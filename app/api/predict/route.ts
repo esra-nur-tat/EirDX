@@ -470,11 +470,39 @@ export async function POST(req: Request) {
     console.log(`🔧 Applying bias correction: offset=${offset.toFixed(2)} mg/dL`);
 
     predictions_real = predictions_real.map((v) => v - offset);
+
+
+
     predictions_real = predictions_real.map((v) =>
       Math.max(40, Math.min(v, 400))
     );
 
+ // 🎯 Smooth anchor to last measured glucose
+    const lastGlucose = labs
+      ?.filter((l) => l.lab_category === "Glucose" && typeof l.value === "number")
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]?.value;
 
+    if (typeof lastGlucose === "number" && !isNaN(lastGlucose)) {
+      console.log(`🎯 Anchoring first prediction to last glucose = ${lastGlucose.toFixed(2)} mg/dL`);
+
+      // İlk tahmini son ölçüme doğru yaklaştır
+
+      // İlk tahmini doğrudan gerçek son glukoza kısmen yaklaştır
+      predictions_real[0] =
+        0.5 * predictions_real[0] + 0.5 * lastGlucose;
+
+      const firstPred = predictions_real[0];
+      const diff = lastGlucose - firstPred;
+
+      // Geçişi 6 saat boyunca yumuşak hale getir (exponential decay)
+      const smoothingHours = 6;
+      const smoothed = predictions_real.map((v, i) => {
+        const weight = Math.exp(-i / smoothingHours); // 1 → 0 azalan ağırlık
+        return v + diff * weight * 0.7; // 0.7 → etki oranı (hafif geçiş)
+      });
+
+      predictions_real = smoothed;
+    }
 
     // 💊 Apply medication-specific scaling
     if (treatment?.medication_name) {

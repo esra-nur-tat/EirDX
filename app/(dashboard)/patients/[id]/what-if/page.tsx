@@ -204,7 +204,7 @@ export default function WhatIfPage({
       ? new Date(past[past.length - 1].date)
       : new Date();
 
-    const future = Array.from({ length: 24 }, (_, i) => {
+    const future = Array.from({ length: 12 }, (_, i) => {
       const fDate = new Date(lastDate);
       fDate.setHours(fDate.getHours() + i + 1);
       const entry: Record<string, any> = { date: fDate.toISOString() };
@@ -256,6 +256,7 @@ export default function WhatIfPage({
                     hour12: false,
                   })
                 }
+                 interval={0}
               />
               <YAxis
                 label={{
