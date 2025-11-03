@@ -225,7 +225,7 @@ export default function LandingPage() {
           guidance and encouragement throughout this project.
         </p>
         <div className="flex flex-wrap justify-center gap-4">
-          {["Adrian Lopez", "Vibha Shukla"].map((name, i) => (
+          {["Adrian Lopez", "Vibha Shukla", "Ahmed Yasin Marşil"].map((name, i) => (
             <motion.div
               key={name}
               initial={{ opacity: 0, y: 20 }}
